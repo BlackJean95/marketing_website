@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Data Science Study Hub</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0e1117;
+    --surface: #161b27;
+    --surface2: #1e2535;
+    --border: rgba(255,255,255,0.08);
+    --accent: #f5a623;
+    --accent2: #4ade80;
+    --accent3: #60a5fa;
+    --text: #e8eaf0;
+    --muted: #8892a4;
+    --danger: #f87171;
+    --success: #4ade80;
+    --radius: 12px;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 24px 16px 48px;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+
+  .header h1 {
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(20px, 4vw, 32px);
+    color: var(--accent);
+    letter-spacing: -1px;
+    margin-bottom: 6px;
+  }
+
+  .header p { color: var(--muted); font-size: 14px; }
+
+  .badge {
+    display: inline-block;
+    background: rgba(245,166,35,0.12);
+    color: var(--accent);
+    border: 1px solid rgba(245,166,35,0.3);
+    border-radius: 20px;
+    font-size: 11px;
+    font-family: 'Space Mono', monospace;
+    padding: 3px 10px;
+    margin-bottom: 12px;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 6px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 6px;
+    margin-bottom: 24px;
+    border: 1px solid var(--border);
+    overflow-x: auto;
+  }
+
+  .tab {
+    flex: 1;
+    min-width: 100px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    text-align: center;
+  }
+
+  .tab.active {
+    background: var(--accent);
+    color: #0e1117;
+    font-weight: 600;
+  }
+
+  .tab:hover:not(.active) { background: var(--surface2); color: var(--text); }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* Quiz */
+  .progress-bar {
+    background: var(--surface2);
+    border-radius: 4px;
+    height: 6px;
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 4px;
+    transition: width 0.4s ease;
+  }
+
+  .quiz-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .quiz-meta span { font-size: 13px; color: var(--muted); }
+  .score-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 14px;
+    color: var(--accent);
+    background: rgba(245,166,35,0.1);
+    padding: 4px 12px;
+    border-radius: 20px;
+  }
+
+  .question-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 16px;
+  }
+
+  .question-number {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .question-text {
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.6;
+    margin-bottom: 20px;
+    color: var(--text);
+  }
+
+  .options { display: flex; flex-direction: column; gap: 10px; }
+
+  .option {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text);
+    transition: all 0.15s;
+    text-align: left;
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.5;
+  }
+
+  .option:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: rgba(245,166,35,0.08);
+  }
+
+  .option.correct {
+    border-color: var(--success);
+    background: rgba(74,222,128,0.1);
+    color: var(--success);
+  }
+
+  .option.wrong {
+    border-color: var(--danger);
+    background: rgba(248,113,113,0.1);
+    color: var(--danger);
+  }
+
+  .option:disabled { cursor: default; }
+
+  .explanation {
+    margin-top: 16px;
+    padding: 14px;
+    background: rgba(96,165,250,0.08);
+    border-left: 3px solid var(--accent3);
+    border-radius: 0 8px 8px 0;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+    display: none;
+  }
+
+  .explanation.show { display: block; }
+
+  .nav-btns {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #0e1117;
+    border-color: var(--accent);
+  }
+
+  .btn-primary:hover { opacity: 0.85; }
+  .btn-ghost { background: transparent; color: var(--muted); }
+  .btn-ghost:hover { background: var(--surface2); color: var(--text); }
+
+  .result-card {
+    text-align: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 40px 24px;
+  }
+
+  .result-score {
+    font-family: 'Space Mono', monospace;
+    font-size: 64px;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .result-label { color: var(--muted); font-size: 14px; margin-bottom: 24px; }
+  .result-msg { font-size: 18px; font-weight: 500; margin-bottom: 8px; }
+
+  /* Projects */
+  .projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+  }
+
+  .project-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    transition: border-color 0.2s;
+  }
+
+  .project-card:hover { border-color: rgba(245,166,35,0.4); }
+
+  .project-level {
+    font-size: 11px;
+    font-family: 'Space Mono', monospace;
+    padding: 3px 10px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-bottom: 12px;
+  }
+
+  .level-beginner { background: rgba(74,222,128,0.1); color: var(--success); }
+  .level-intermediate { background: rgba(245,166,35,0.1); color: var(--accent); }
+  .level-advanced { background: rgba(248,113,113,0.1); color: var(--danger); }
+
+  .project-title { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+  .project-desc { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 12px; }
+  .project-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  .tag {
+    font-size: 11px;
+    padding: 3px 9px;
+    background: var(--surface2);
+    border-radius: 20px;
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+
+  /* Tips */
+  .tips-list { display: flex; flex-direction: column; gap: 12px; }
+
+  .tip-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  .tip-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .tip-content h3 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .tip-content p { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+  /* Upload */
+  .upload-area {
+    background: var(--surface);
+    border: 2px dashed rgba(245,166,35,0.3);
+    border-radius: var(--radius);
+    padding: 40px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+
+  .upload-area:hover, .upload-area.drag { border-color: var(--accent); background: rgba(245,166,35,0.04); }
+
+  .upload-icon { font-size: 40px; margin-bottom: 12px; }
+  .upload-area h3 { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+  .upload-area p { font-size: 13px; color: var(--muted); }
+
+  #fileInput { display: none; }
+
+  .ai-output {
+    margin-top: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+
+  .ai-output h3 { font-size: 15px; font-weight: 600; margin-bottom: 12px; color: var(--accent3); }
+
+  .loading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  .dot-pulse {
+    display: flex;
+    gap: 4px;
+  }
+
+  .dot-pulse span {
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+  .dot-pulse span:nth-child(2) { animation-delay: 0.2s; }
+  .dot-pulse span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.3; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1); }
+  }
+
+  .section-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  pre { white-space: pre-wrap; font-family: 'DM Sans', sans-serif; font-size: 14px; line-height: 1.7; color: var(--text); }
+
+  .error { color: var(--danger); font-size: 13px; margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="badge">SESSION 01 — INTRO TO DATA SCIENCE</div>
+  <h1>Study Hub</h1>
+  <p>Quiz yourself, explore projects, and study smarter</p>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('quiz')">Quiz</button>
+  <button class="tab" onclick="switchTab('projects')">Projects</button>
+  <button class="tab" onclick="switchTab('tips')">Study Tips</button>
+  <button class="tab" onclick="switchTab('upload')">New Transcript</button>
+</div>
+
+<!-- QUIZ PANEL -->
+<div id="panel-quiz" class="panel active">
+  <div class="quiz-meta">
+    <span id="q-counter">Question 1 of 10</span>
+    <span class="score-badge" id="score-display">Score: 0</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progress" style="width:10%"></div></div>
+  <div id="quiz-body"></div>
+</div>
+
+<!-- PROJECTS PANEL -->
+<div id="panel-projects" class="panel">
+  <div class="section-title">Hands-on Projects — Intro Module</div>
+  <div class="projects-grid">
+
+    <div class="project-card">
+      <span class="project-level level-beginner">Beginner</span>
+      <div class="project-title">Loan Approval Simulator</div>
+      <div class="project-desc">Build a simple rule-based system (then upgrade to a model) that decides whether an applicant qualifies for a loan based on income, credit score, and employment status. Mirrors the Capitec example from class.</div>
+      <div class="project-tags">
+        <span class="tag">Python</span><span class="tag">if/else logic</span><span class="tag">Pandas</span>
+      </div>
+    </div>
+
+    <div class="project-card">
+      <span class="project-level level-beginner">Beginner</span>
+      <div class="project-title">PII Data Anonymiser</div>
+      <div class="project-desc">Write a script that takes a CSV with personal info (names, IDs, phone numbers) and replaces them with anonymised/aggregated values while preserving insight. Practice POPIA compliance thinking hands-on.</div>
+      <div class="project-tags">
+        <span class="tag">Python</span><span class="tag">Pandas</span><span class="tag">Data Ethics</span>
+      </div>
+    </div>
+
+    <div class="project-card">
+      <span class="project-level level-intermediate">Intermediate</span>
+      <div class="project-title">Retail Sales Segmentation</div>
+      <div class="project-desc">Use a public retail dataset (e.g. from Kaggle) to segment customers by age and purchase behaviour. Visualise with bar plots — just like the iPhone age-group example from the lecture.</div>
+      <div class="project-tags">
+        <span class="tag">Pandas</span><span class="tag">Matplotlib</span><span class="tag">EDA</span>
+      </div>
+    </div>
+
+    <div class="project-card">
+      <span class="project-level level-intermediate">Intermediate</span>
+      <div class="project-title">Data Quality Inspector</div>
+      <div class="project-desc">Build a function that takes any DataFrame and automatically reports: nulls, duplicates, outliers, and type mismatches. Automate the "never trust data" principle from class into a reusable tool.</div>
+      <div class="project-tags">
+        <span class="tag">Python</span><span class="tag">Pandas</span><span class="tag">Data Cleaning</span>
+      </div>
+    </div>
+
+    <div class="project-card">
+      <span class="project-level level-intermediate">Intermediate</span>
+      <div class="project-title">Stakeholder Dashboard</div>
+      <div class="project-desc">Take a raw dataset, clean it, and build a simple dashboard that translates raw numbers into business decisions. Practice the full "data gap" workflow — from raw source to decision-maker-ready insights.</div>
+      <div class="project-tags">
+        <span class="tag">Matplotlib / Seaborn</span><span class="tag">Pandas</span><span class="tag">Storytelling</span>
+      </div>
+    </div>
+
+    <div class="project-card">
+      <span class="project-level level-advanced">Advanced</span>
+      <div class="project-title">Healthcare Outbreak Predictor</div>
+      <div class="project-desc">Use public epidemiological data to build a model that predicts potential disease outbreaks. Work through anonymisation, aggregation vs PII concerns, and compliance framing — directly from the healthcare examples in class.</div>
+      <div class="project-tags">
+        <span class="tag">Scikit-learn</span><span class="tag">ML Modelling</span><span class="tag">Ethics</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- TIPS PANEL -->
+<div id="panel-tips" class="panel">
+  <div class="section-title">Your Personalised Study Plan</div>
+  <div class="tips-list">
+
+    <div class="tip-card">
+      <div class="tip-icon" style="background:rgba(245,166,35,0.1)">🗂</div>
+      <div class="tip-content">
+        <h3>Build a "Concepts Glossary" notebook</h3>
+        <p>After each lecture, write down 5–10 key terms in your own words (PII, domain knowledge, data cleaning, aggregation, compliance). Writing forces understanding. Don't copy definitions — paraphrase them.</p>
+      </div>
+    </div>
+
+    <div class="tip-card">
+      <div class="tip-icon" style="background:rgba(74,222,128,0.1)">🔁</div>
+      <div class="tip-content">
+        <h3>Use the Feynman Technique</h3>
+        <p>Pick one concept per day (e.g. "why is aggregated data safer than PII?") and explain it out loud to yourself or a friend as if they're 10 years old. If you stumble, that's the gap you need to revisit.</p>
+      </div>
+    </div>
+
+    <div class="tip-card">
+      <div class="tip-icon" style="background:rgba(96,165,250,0.1)">🏭</div>
+      <div class="tip-content">
+        <h3>Apply concepts to YOUR industry</h3>
+        <p>The lecturer said this clearly — leverage your existing domain knowledge. Whatever field you came from, find a dataset in it. Your existing industry understanding is a competitive advantage over a pure fresh graduate.</p>
+      </div>
+    </div>
+
+    <div class="tip-card">
+      <div class="tip-icon" style="background:rgba(248,113,113,0.1)">⚠️</div>
+      <div class="tip-content">
+        <h3>Practice asking "at what point does this become unethical?"</h3>
+        <p>For every dataset or project you work on, force yourself to consider: What PII is here? Am I complying with POPIA? Who consented to what? This thinking habit separates average from excellent data practitioners.</p>
+      </div>
+    </div>
+
+    <div class="tip-card">
+      <div class="tip-icon" style="background:rgba(245,166,35,0.1)">📊</div>
+      <div class="tip-content">
+        <h3>Never just read — always code along</h3>
+        <p>For every concept covered (data cleaning, EDA, modelling), open a Jupyter notebook and implement it. Even toy examples with 20 rows build muscle memory faster than re-reading notes ever will.</p>
+      </div>
+    </div>
+
+    <div class="tip-card">
+      <div class="tip-icon" style="background:rgba(74,222,128,0.1)">🧪</div>
+      <div class="tip-content">
+        <h3>Validate your data like a scientist</h3>
+        <p>The lecturer said: "Never trust data." Internalise this. Every time you load a dataset, write a validation function before touching it. Check nulls, duplicates, data types, ranges, and outliers — always, even for small datasets.</p>
+      </div>
+    </div>
+
+    <div class="tip-card">
+      <div class="tip-icon" style="background:rgba(96,165,250,0.1)">🧭</div>
+      <div class="tip-content">
+        <h3>Map the full workflow after every session</h3>
+        <p>Draw the data pipeline (Collection → Cleaning → Exploration → Modelling → Presentation) and place every concept you learned that day into it. This builds a mental map that connects isolated ideas into a system.</p>
+      </div>
+    </div>
+
+    <div class="tip-card">
+      <div class="tip-icon" style="background:rgba(248,113,113,0.1)">🔍</div>
+      <div class="tip-content">
+        <h3>Research South African data law (POPIA)</h3>
+        <p>Spend 30 minutes reading the POPIA act summary. As a South African data practitioner, knowing this is not optional — it's a professional requirement and a career differentiator when working with local organisations.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- UPLOAD PANEL -->
+<div id="panel-upload" class="panel">
+  <div class="section-title">Upload a New Transcript</div>
+  <div class="upload-area" id="dropZone" onclick="document.getElementById('fileInput').click()" ondragover="event.preventDefault(); this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event)">
+    <div class="upload-icon">📄</div>
+    <h3>Drop your transcript PDF or paste text</h3>
+    <p>Upload a PDF transcript from your bootcamp and get instant quizzes, projects & study notes</p>
+    <input type="file" id="fileInput" accept=".pdf,.txt" onchange="handleFile(event)" />
+  </div>
+
+  <div style="margin: 16px 0; text-align: center; color: var(--muted); font-size: 13px;">— or paste transcript text below —</div>
+
+  <textarea id="transcriptText" placeholder="Paste your transcript text here..." style="width:100%; min-height:120px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:14px; color:var(--text); font-family:'DM Sans',sans-serif; font-size:14px; resize:vertical;"></textarea>
+
+  <div style="margin-top: 12px;">
+    <button class="btn btn-primary" onclick="processTranscript()" style="width:100%;">Generate Study Materials with AI ↗</button>
+  </div>
+
+  <div id="ai-result"></div>
+</div>
+
+<script>
+const QUESTIONS = [
+  {
+    q: "What is the core definition of data science as described in the lecture?",
+    options: ["A programming language used to build apps","A multidisciplinary field focused on extracting knowledge and insights from data","A database management system used in finance","A branch of mathematics that studies algorithms"],
+    answer: 1,
+    explanation: "The lecture defines data science as 'a multidisciplinary field that focuses on extracting knowledge and insights from data' — combining data (raw information) with science (experimentation and analysis)."
+  },
+  {
+    q: "What does PII stand for, and why is it important for data practitioners?",
+    options: ["Public Internet Information — data that is freely shareable online","Personal Identifying Information — data that must be protected and not shared without consent","Private Industry Index — a metric for measuring business performance","Processed Input Intelligence — the result of running ML models"],
+    answer: 1,
+    explanation: "PII stands for Personal Identifying Information — things like your name, address, and phone number. Data practitioners must safeguard PII to comply with regulations like POPIA and avoid compliance breaches."
+  },
+  {
+    q: "In South Africa, which act governs how companies can use people's personal data?",
+    options: ["The Data Science Regulation Act (DSRA)","The National Information Bill","The POPIA Act (Protection of Personal Information Act)","The Consumer Data Rights Act"],
+    answer: 2,
+    explanation: "The lecturer specifically mentioned the POPIA Act as the South African regulation governing the use of personal data, warning students to always consider compliance when working with data."
+  },
+  {
+    q: "What is the key difference between PII data and aggregated data from a compliance perspective?",
+    options: ["PII is more accurate; aggregated data is less reliable","Aggregated data is always illegal to share; PII is allowed","Aggregated data cannot identify individuals and is safer to share; PII can identify specific people","There is no difference; both require the same level of protection"],
+    answer: 2,
+    explanation: "Aggregated data (e.g. '15 people in Johannesburg are HIV positive') cannot identify individuals and is generally safe to share. PII data (linked to a specific person) requires strict protection. The moment data becomes identifiable, it must be protected."
+  },
+  {
+    q: "Why did the lecturer say 'never trust data'?",
+    options: ["Because data is always fabricated by companies","Because even correct-looking samples may hide errors in rows you haven't seen yet","Because databases are always outdated","Because data only becomes useful after running machine learning models"],
+    answer: 1,
+    explanation: "The lecturer used the SQL example: if a table has 149,000 billion rows and you only see 100, row 121 might have an issue you never saw. Always validate and investigate beyond what's visible — the data has secrets."
+  },
+  {
+    q: "What is 'domain knowledge' and why does the lecturer say it's an advantage?",
+    options: ["Knowledge of programming languages like Python and SQL","Industry-specific understanding that helps a data practitioner interpret data more meaningfully","Knowledge of how to set up cloud data infrastructure","A certification required before starting a data science job"],
+    answer: 1,
+    explanation: "Domain knowledge is understanding of a specific industry (healthcare, finance, marketing, etc.). The lecturer argued that if you already work in an industry, switching to a data role in that same field gives you a major advantage because you understand the context, terminology, and stakeholder needs."
+  },
+  {
+    q: "What is the correct order of the data science workflow as described in the lecture?",
+    options: ["Modelling → Cleaning → Collection → Exploration → Interpretation","Collection → Cleaning → Exploration → Modelling → Interpretation","Interpretation → Modelling → Exploration → Cleaning → Collection","Cleaning → Collection → Modelling → Interpretation → Exploration"],
+    answer: 1,
+    explanation: "The workflow is: 1) Data Collection, 2) Data Cleaning, 3) Data Exploration (EDA), 4) Data Modelling, 5) Interpretation / Presenting to stakeholders. Each step builds on the previous one."
+  },
+  {
+    q: "A company uses your phone number (which you gave them to sign up for their newsletter) to call you about a completely different product they just launched. What is this an example of?",
+    options: ["Legitimate data usage since you gave them your number","Cross-marketing without proper consent — a potential POPIA violation","Targeted advertising, which is always legal","Standard business practice that requires no additional consent"],
+    answer: 1,
+    explanation: "The lecturer called this 'cross-marketing.' Giving consent for one product/campaign doesn't mean you've given consent for all campaigns. Using the data for a different purpose is a POPIA violation — consent is specific, not blanket."
+  },
+  {
+    q: "What role does a data practitioner play in the 'data gap' between raw data and decision-makers?",
+    options: ["They collect data from customers directly and store it in databases","They take raw data, clean it, analyse it, and transform it into actionable insights the decision-maker can understand","They make the final business decisions using their own judgment","They only build machine learning models — all other steps are done by software"],
+    answer: 1,
+    explanation: "The 'data gap' is the space between the raw data source and the decision-maker (CEO, CFO, board). The data practitioner bridges this gap by collecting, cleaning, modelling, and presenting data as digestible, actionable insights."
+  },
+  {
+    q: "Which of the following best illustrates why machine learning is used for loan approvals?",
+    options: ["Machines are cheaper to hire than bank staff","ML models can be trained to recognise qualifying and non-qualifying profiles, making decisions faster and more consistently than humans","Machine learning generates more profit per loan than human-reviewed loans","Banks are legally required to use ML for all financial decisions"],
+    answer: 1,
+    explanation: "The lecturer explained that ML models can be programmed/trained to identify what a qualifying and non-qualifying loan profile looks like. Machines are faster and less error-prone than humans, which is why you can now get instant pre-qualification decisions on a banking app."
+  }
+];
+
+let current = 0;
+let score = 0;
+let answered = new Array(QUESTIONS.length).fill(null);
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['quiz','projects','tips','upload'][i] === name));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+}
+
+function renderQuestion() {
+  const q = QUESTIONS[current];
+  const body = document.getElementById('quiz-body');
+  const pct = ((current + 1) / QUESTIONS.length) * 100;
+  document.getElementById('progress').style.width = pct + '%';
+  document.getElementById('q-counter').textContent = `Question ${current + 1} of ${QUESTIONS.length}`;
+
+  const selectedIdx = answered[current];
+  const isAnswered = selectedIdx !== null;
+
+  body.innerHTML = `
+    <div class="question-card">
+      <div class="question-number">Q${current + 1}</div>
+      <div class="question-text">${q.q}</div>
+      <div class="options">
+        ${q.options.map((opt, i) => {
+          let cls = '';
+          if (isAnswered) {
+            if (i === q.answer) cls = 'correct';
+            else if (i === selectedIdx) cls = 'wrong';
+          }
+          return `<button class="option ${cls}" ${isAnswered ? 'disabled' : ''} onclick="selectAnswer(${i})">${opt}</button>`;
+        }).join('')}
+      </div>
+      <div class="explanation ${isAnswered ? 'show' : ''}">${q.explanation}</div>
+    </div>
+    <div class="nav-btns">
+      <button class="btn btn-ghost" onclick="goTo(${current - 1})" ${current === 0 ? 'disabled style="opacity:0.3"' : ''}>← Prev</button>
+      ${current < QUESTIONS.length - 1
+        ? `<button class="btn btn-primary" onclick="goTo(${current + 1})">Next →</button>`
+        : `<button class="btn btn-primary" onclick="showResult()">See Results</button>`}
+    </div>
+  `;
+}
+
+function selectAnswer(idx) {
+  if (answered[current] !== null) return;
+  answered[current] = idx;
+  if (idx === QUESTIONS[current].answer) score++;
+  document.getElementById('score-display').textContent = `Score: ${score}`;
+  renderQuestion();
+}
+
+function goTo(idx) {
+  if (idx < 0 || idx >= QUESTIONS.length) return;
+  current = idx;
+  renderQuestion();
+}
+
+function showResult() {
+  const pct = Math.round((score / QUESTIONS.length) * 100);
+  let msg, tip;
+  if (pct >= 90) { msg = "Outstanding! You've nailed this module."; tip = "You're ready for the next transcript. Use the 'New Transcript' tab to keep going."; }
+  else if (pct >= 70) { msg = "Great work — solid understanding!"; tip = "Review the questions you got wrong, then tackle a beginner project."; }
+  else if (pct >= 50) { msg = "Good start — keep building!"; tip = "Re-read the transcript and re-take the quiz. Aim for 80%+ before moving on."; }
+  else { msg = "More practice needed — you've got this!"; tip = "Work through the Study Tips tab and revisit the transcript. Concepts will click with repetition."; }
+
+  document.getElementById('quiz-body').innerHTML = `
+    <div class="result-card">
+      <div class="result-score">${pct}%</div>
+      <div class="result-label">${score} out of ${QUESTIONS.length} correct</div>
+      <div class="result-msg">${msg}</div>
+      <p style="color:var(--muted);font-size:13px;margin-bottom:24px;">${tip}</p>
+      <button class="btn btn-primary" onclick="resetQuiz()">Retake Quiz</button>
+    </div>
+  `;
+  document.getElementById('progress').style.width = '100%';
+}
+
+function resetQuiz() {
+  current = 0; score = 0;
+  answered = new Array(QUESTIONS.length).fill(null);
+  document.getElementById('score-display').textContent = 'Score: 0';
+  renderQuestion();
+}
+
+async function processTranscript() {
+  const text = document.getElementById('transcriptText').value.trim();
+  if (!text) { alert('Please paste some transcript text first.'); return; }
+
+  const resultDiv = document.getElementById('ai-result');
+  resultDiv.innerHTML = `<div class="ai-output"><div class="loading"><div class="dot-pulse"><span></span><span></span><span></span></div> Analysing transcript and generating study materials...</div></div>`;
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        messages: [{
+          role: "user",
+          content: `You are a data science bootcamp tutor. Based on the following lecture transcript, generate study materials in this EXACT format:
+
+QUIZ QUESTIONS (5 multiple choice, with answer and explanation):
+Q1: [question]
+A) [option] B) [option] C) [option] D) [option]
+Answer: [letter]
+Explanation: [1-2 sentences]
+
+(repeat for Q2-Q5)
+
+TOP 3 PROJECTS:
+1. [Title] (Level: Beginner/Intermediate/Advanced)
+[2 sentence description]
+
+2. ...
+3. ...
+
+TOP 3 STUDY TIPS:
+1. [Specific tip based on this lecture's content]
+2. ...
+3. ...
+
+Transcript:
+${text.substring(0, 3000)}`
+        }]
+      })
+    });
+
+    const data = await response.json();
+    const content = data.content?.[0]?.text || 'No response generated.';
+
+    resultDiv.innerHTML = `
+      <div class="ai-output">
+        <h3>Generated Study Materials</h3>
+        <pre>${content}</pre>
+        <div style="margin-top:16px">
+          <button class="btn btn-ghost" onclick="navigator.clipboard.writeText(document.querySelector('#ai-result pre').textContent)">Copy Results</button>
+        </div>
+      </div>
+    `;
+  } catch (err) {
+    resultDiv.innerHTML = `<div class="ai-output"><p class="error">Error: ${err.message}. Make sure you have an active Claude session.</p></div>`;
+  }
+}
+
+function handleFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => { document.getElementById('transcriptText').value = e.target.result; };
+  reader.readAsText(file);
+}
+
+function handleDrop(event) {
+  event.preventDefault();
+  document.getElementById('dropZone').classList.remove('drag');
+  const file = event.dataTransfer.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => { document.getElementById('transcriptText').value = e.target.result; };
+  reader.readAsText(file);
+}
+
+renderQuestion();
+</script>
+</body>
+</html>
